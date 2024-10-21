@@ -14,11 +14,27 @@ jobs:
     - name: Checkout repositoty
       uses: actions/checkout@v2
       
-    - name: Set up Node.js 
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
-        cache: 'npm'
-        
-    - name: 'Checkout v4'
-      uses: actions/checkout@v4
+    # - name: Set up Node.js 
+    #   uses: actions/setup-node@v4
+    #   with:
+    #     node-version: 18
+    #     cache: 'npm'
+    - name: Set up SSH on the Github Agent and add it to the known_hosts
+      shell: bash
+      run: |
+        service ssh status
+        eval `ssh-agent -s`
+        mkdir - /home/runner/.ssh/
+        touch /home/runner/.ssh/id_rsa
+        echo -e "${{secrets.SSH_KEY}}" > /home/runner/.ssh/id_rsa
+        chmod 700 /home/runner/.ssh/id_rsa
+        ssh-keyscan -t rsa,dsa,ecdsa,ed25519 ${{secrets.SSH_HOST}} >> /home/runner/.ssh/known_hosts
+
+
+    - name: Run Ansible playbook
+      shell: bash
+      run: |
+        service ssh status
+        ansible-playbook -i infrastructure/ansible/inventory.ini infrastructure/ansible/playbook.angular.yml -v
+
+    
